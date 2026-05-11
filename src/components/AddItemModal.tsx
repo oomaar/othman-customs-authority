@@ -5,11 +5,18 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { X } from "lucide-react";
 import type { ItemFormValues } from "@/lib/types";
+import { parseNumber } from "@/lib/format";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   onAdd: (values: ItemFormValues) => void;
+};
+
+type FormState = {
+  title: string;
+  price: string;
+  owner: string;
 };
 
 export function AddItemModal({ open, onClose, onAdd }: Props) {
@@ -18,8 +25,8 @@ export function AddItemModal({ open, onClose, onAdd }: Props) {
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<ItemFormValues>({
-    defaultValues: { title: "", price: 0, owner: "" },
+  } = useForm<FormState>({
+    defaultValues: { title: "", price: "", owner: "" },
   });
 
   useEffect(() => {
@@ -32,9 +39,11 @@ export function AddItemModal({ open, onClose, onAdd }: Props) {
   }, [open, onClose]);
 
   const submit = handleSubmit((values) => {
+    const price = parseNumber(values.price);
+    if (price === null) return;
     onAdd({
       title: values.title.trim(),
-      price: Number(values.price),
+      price,
       owner: values.owner.trim(),
     });
     reset();
@@ -103,17 +112,19 @@ export function AddItemModal({ open, onClose, onAdd }: Props) {
 
               <Field label="Price (EGP)" error={errors.price?.message}>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
                   inputMode="decimal"
                   placeholder="120"
+                  autoComplete="off"
                   className={inputClass}
                   {...register("price", {
                     required: "Price is required",
-                    valueAsNumber: true,
-                    validate: (v) =>
-                      (Number.isFinite(v) && v > 0) ||
-                      "Price must be greater than 0",
+                    validate: (v) => {
+                      const n = parseNumber(v);
+                      if (n === null) return "Enter a valid number";
+                      if (n <= 0) return "Price must be greater than 0";
+                      return true;
+                    },
                   })}
                 />
               </Field>

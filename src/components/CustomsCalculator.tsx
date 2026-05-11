@@ -3,9 +3,9 @@
 import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
 import { Sparkles } from "lucide-react";
-import { formatEGP } from "@/lib/format";
+import { formatEGP, parseNumber } from "@/lib/format";
 
-type FormValues = { customsTotal: number };
+type FormValues = { customsTotal: string };
 
 type Props = {
   totalOrderPrice: number;
@@ -22,10 +22,12 @@ export function CustomsCalculator({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>({ defaultValues: { customsTotal: 0 } });
+  } = useForm<FormValues>({ defaultValues: { customsTotal: "" } });
 
   const submit = handleSubmit((values) => {
-    onCalculate(Number(values.customsTotal));
+    const n = parseNumber(values.customsTotal);
+    if (n === null) return;
+    onCalculate(n);
   });
 
   return (
@@ -51,17 +53,20 @@ export function CustomsCalculator({
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <input
-            type="number"
-            step="0.01"
+            type="text"
             inputMode="decimal"
             placeholder="0.00"
+            autoComplete="off"
             disabled={disabled}
             className="w-full rounded-lg border border-border bg-background px-3 py-2.5 pr-14 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
             {...register("customsTotal", {
               required: "Required",
-              valueAsNumber: true,
-              validate: (v) =>
-                (Number.isFinite(v) && v > 0) || "Must be greater than 0",
+              validate: (v) => {
+                const n = parseNumber(v);
+                if (n === null) return "Enter a valid number";
+                if (n <= 0) return "Must be greater than 0";
+                return true;
+              },
             })}
           />
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted">

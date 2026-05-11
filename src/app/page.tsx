@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { motion } from "motion/react";
-import { Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { Check, Download, Plus, Save } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { AddItemModal } from "@/components/AddItemModal";
 import { OrderItemsList } from "@/components/OrderItemsList";
@@ -10,10 +10,18 @@ import { CustomsCalculator } from "@/components/CustomsCalculator";
 import { OwnerGroups } from "@/components/OwnerGroups";
 import type { ItemFormValues, OrderItem } from "@/lib/types";
 import { formatEGP } from "@/lib/format";
+import { exportOrderPdf } from "@/lib/pdf";
+import { loadItems, saveItems } from "@/lib/storage";
 
 export default function Home() {
   const [items, setItems] = useState<OrderItem[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+
+  useEffect(() => {
+    const saved = loadItems();
+    if (saved && saved.length > 0) setItems(saved);
+  }, []);
 
   const totalOrderPrice = useMemo(
     () => items.reduce((sum, i) => sum + i.price, 0),
@@ -51,6 +59,17 @@ export default function Home() {
     );
   };
 
+  const handleSave = () => {
+    saveItems(items);
+    setJustSaved(true);
+    window.setTimeout(() => setJustSaved(false), 1600);
+  };
+
+  const handleExport = () => {
+    if (items.length === 0) return;
+    exportOrderPdf(items);
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -60,7 +79,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mb-8 flex items-end justify-between gap-4"
+          className="mb-6 flex flex-wrap items-end justify-between gap-4"
         >
           <div>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -81,6 +100,44 @@ export default function Home() {
             Add item
           </button>
         </motion.section>
+
+        <AnimatePresence>
+          {items.length > 0 && (
+            <motion.div
+              key="actions"
+              layout
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="mb-4 flex flex-wrap gap-2"
+            >
+              <button
+                onClick={handleSave}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-surface-muted"
+              >
+                {justSaved ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-green-500" />
+                    Saved
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-3.5 w-3.5" />
+                    Save
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleExport}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-surface-muted"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Export PDF
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <motion.section
           layout
