@@ -22,7 +22,7 @@ export function Navbar() {
           </div>
           <div className="leading-tight">
             <p className="text-sm font-semibold tracking-tight">
-              Customs Calculator
+              Othman&apos;s Customs Authority
             </p>
             <p className="text-[11px] text-muted">
               Split customs across order items

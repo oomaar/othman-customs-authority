@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Customs Calculator",
+  title: "Othman's Customs Authority",
   description: "Split a customs amount across order items proportionally.",
 };
 
