@@ -2,9 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, Download, Plus, Save } from "lucide-react";
+import {
+  Check,
+  ClipboardPaste,
+  Download,
+  Plus,
+  Save,
+  ScanLine,
+} from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { AddItemModal } from "@/components/AddItemModal";
+import { BulkAddModal } from "@/components/BulkAddModal";
+import { ImageUploadModal } from "@/components/ImageUploadModal";
 import { OrderItemsList } from "@/components/OrderItemsList";
 import { CustomsCalculator } from "@/components/CustomsCalculator";
 import { OwnerGroups } from "@/components/OwnerGroups";
@@ -16,6 +25,8 @@ import { loadItems, saveItems } from "@/lib/storage";
 export default function Home() {
   const [items, setItems] = useState<OrderItem[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
 
   useEffect(() => {
@@ -42,6 +53,18 @@ export default function Home() {
         price: values.price,
         owner: values.owner,
       },
+    ]);
+  };
+
+  const addItems = (values: ItemFormValues[]) => {
+    setItems((prev) => [
+      ...prev,
+      ...values.map((v) => ({
+        id: crypto.randomUUID(),
+        title: v.title,
+        price: v.price,
+        owner: v.owner,
+      })),
     ]);
   };
 
@@ -92,13 +115,29 @@ export default function Home() {
             </p>
           </div>
 
-          <button
-            onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            Add item
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setScanOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground transition hover:bg-surface-muted"
+            >
+              <ScanLine className="h-4 w-4" />
+              Scan image
+            </button>
+            <button
+              onClick={() => setBulkOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground transition hover:bg-surface-muted"
+            >
+              <ClipboardPaste className="h-4 w-4" />
+              Paste items
+            </button>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              Add item
+            </button>
+          </div>
         </motion.section>
 
         <AnimatePresence>
@@ -190,6 +229,16 @@ export default function Home() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onAdd={addItem}
+      />
+      <BulkAddModal
+        open={bulkOpen}
+        onClose={() => setBulkOpen(false)}
+        onAddMany={addItems}
+      />
+      <ImageUploadModal
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onAddMany={addItems}
       />
     </div>
   );
